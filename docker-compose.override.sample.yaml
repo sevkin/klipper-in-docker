@@ -1,0 +1,7 @@
+services:
+  klipper:
+    devices:
+      - /dev/serial/by-id/usb-Klipper_BLABLABLA:/dev/ttyACM0
+  klipper_mcu:
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0

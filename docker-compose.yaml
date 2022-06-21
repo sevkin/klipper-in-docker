@@ -1,0 +1,81 @@
+services:
+  klipper:
+    build:
+      context: docker
+      dockerfile: klipper.Dockerfile
+      target: run
+    container_name: klipper
+    restart: unless-stopped
+    logging:
+      driver: none
+    volumes:
+      - ./config:/home/klipper/cfg
+      - run:/home/klipper/run
+      - gcode:/home/klipper/gcode
+    #   - log:/home/klipper/log
+    # command:
+    #   - "-I"
+    #   - "run/klipper.tty"
+    #   - "-a"
+    #   - "run/klipper.sock"
+    #   - "cfg/printer.cfg"
+    #   - "-l"
+    #   - "log/klippy.log"
+    profiles:
+      - klipper
+
+  klipper_mcu:
+    build:
+      context: docker
+      dockerfile: klipper.Dockerfile
+      target: mcu
+    container_name: klipper_mcu
+    logging:
+      driver: none
+    profiles:
+      - mcu
+
+  moonraker:
+    build:
+      context: docker
+      dockerfile: moonraker.Dockerfile
+      target: run
+    container_name: moonraker
+    restart: unless-stopped
+    # pid: host
+    depends_on:
+      klipper:
+        condition: service_started
+    logging:
+      driver: none
+    volumes:
+      - /dev/null:/opt/klipper/config/null
+      - /dev/null:/opt/klipper/docs/null
+      # - /run/dbus:/run/dbus
+      # - /run/systemd:/run/systemd
+      - ./config:/home/klipper/cfg
+      - run:/home/klipper/run
+      - gcode:/home/klipper/gcode
+      - moonraker-db:/home/klipper/db
+      # - log:/home/klipper/log
+      # command:
+      #   - "-c"
+      #   - "cfg/moonraker.cfg"
+      # - "-l"
+      # - "log/moonraker.log"
+    ports:
+      - 127.0.0.1:7125:7125
+    profiles:
+      - klipper
+
+volumes:
+  run:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  gcode:
+  moonraker-db:
+    # log:
+    #   driver_opts:
+    #     type: tmpfs
+    #     device: tmpfs
