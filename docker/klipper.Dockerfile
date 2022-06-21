@@ -62,7 +62,7 @@ RUN apt -y install \
 
 COPY --from=build /opt/klipper /opt/klipper
 
-WORKDIR /opt/klipper/klipper
+WORKDIR /opt/klipper
 
 # make menuconfig
 # make create-board-link
