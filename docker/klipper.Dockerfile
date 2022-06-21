@@ -59,6 +59,9 @@ RUN apt -y install \
     cpp \
     binutils \
     gcc-arm-none-eabi
+RUN apt -y install \
+    python3-minimal \
+    stm32flash
 
 COPY --from=build /opt/klipper /opt/klipper
 
