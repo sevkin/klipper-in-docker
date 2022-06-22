@@ -5,8 +5,7 @@ ARG REPO=https://github.com/Klipper3d/klipper
 ARG VERSION=master
 RUN git clone ${REPO} klipper \
     && cd klipper \
-    && git checkout ${VERSION} \
-    && rm -rf .git
+    && git checkout ${VERSION}
 RUN python3 -m venv venv \
     && venv/bin/pip3 install -r klipper/scripts/klippy-requirements.txt \
     && venv/bin/python3 -m compileall klipper/klippy \
