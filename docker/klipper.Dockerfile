@@ -14,7 +14,7 @@ RUN python3 -m venv venv \
 
 
 FROM alpine:3.16 AS mcu
-RUN apk add --update make python3 gcc-arm-none-eabi newlib-arm-none-eabi stm32flash
+RUN apk add --update make python3
 WORKDIR /opt/klipper
 COPY --from=build /opt /opt
 CMD [ "/bin/ash" ]
