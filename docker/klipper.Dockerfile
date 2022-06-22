@@ -1,72 +1,34 @@
-FROM ubuntu:22.04 AS build
-
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update
-RUN apt -y install \
-    git \
-    gcc \
-    python3 \
-    python3-greenlet \
-    python3-cffi \
-    python3-serial \
-    python3-jinja2
-
+FROM alpine:3.16 AS build
+RUN apk add --update git gcc python3-dev py3-cffi libffi-dev musl-dev
 WORKDIR /opt
-
 ARG REPO=https://github.com/Klipper3d/klipper
 ARG VERSION=master
 RUN git clone ${REPO} klipper \
     && cd klipper \
     && git checkout ${VERSION} \
     && rm -rf .git
+RUN python3 -m venv venv \
+    && venv/bin/pip3 install -r klipper/scripts/klippy-requirements.txt \
+    && venv/bin/python3 -m compileall klipper/klippy \
+    && venv/bin/python3 klipper/klippy/chelper/__init__.py
 
-RUN python3 -m compileall klipper/klippy \
-    && python3 klipper/klippy/chelper/__init__.py
 
-
-FROM ubuntu:22.04 AS run
-
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt -y upgrade \
-    && apt -y install \
-    python3 \
-    python3-greenlet \
-    python3-cffi \
-    python3-serial \
-    python3-jinja2 \
-    && apt clean
-
-COPY --from=build /opt/klipper /opt/klipper
-
+FROM alpine:3.16 AS run
 WORKDIR /home/klipper
-
-RUN useradd -d /home/klipper -m -l -N -g users -G dialout -u 1000 -s /bin/false klipper \
-    && mkdir run cfg gcode log \
-    && chown -R klipper:dialout /home/klipper
-
+RUN apk add --update python3 py3-cffi libffi \
+    && rm /var/cache/apk/* \
+    && adduser -u 1000 -G users -s /bin/false -D klipper \
+    && addgroup klipper dialout \
+    && mkdir run cfg gcode log
+COPY --from=build /opt /opt
 USER klipper
 VOLUME ["/home/klipper/run", "/home/klipper/cfg", "/home/klipper/gcode"]
-ENTRYPOINT ["python3", "/opt/klipper/klippy/klippy.py"]
+ENTRYPOINT ["/opt/venv/bin/python3", "/opt/klipper/klippy/klippy.py"]
 CMD ["-I", "run/klipper.tty", "-a", "run/klipper.sock", "cfg/printer.cfg"]
 
 
-FROM ubuntu:22.04 AS mcu
-
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update
-RUN apt -y install \
-    make \
-    cpp \
-    binutils \
-    gcc-arm-none-eabi
-RUN apt -y install \
-    python3-minimal \
-    stm32flash
-
-COPY --from=build /opt/klipper /opt/klipper
-
+FROM alpine:3.16 AS mcu
+RUN apk add --update make python3 gcc-arm-none-eabi newlib-arm-none-eabi stm32flash
 WORKDIR /opt/klipper
-
-# make menuconfig
-# make create-board-link
-# make
+COPY --from=build /opt /opt
+CMD [ "/bin/ash" ]

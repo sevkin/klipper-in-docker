@@ -24,12 +24,12 @@ services:
     profiles:
       - klipper
 
-  klipper_mcu:
+  klipper-mcu:
     build:
       context: docker
       dockerfile: klipper.Dockerfile
       target: mcu
-    container_name: klipper_mcu
+    container_name: klipper-mcu
     logging:
       driver: none
     profiles:
